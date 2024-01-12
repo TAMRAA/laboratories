@@ -75,22 +75,29 @@ char **readFile (char *nameFile, char **matrix, int *n){
     return matrix;
 }
 
+
+
 void sortMatrix(char **matrix , int n){
     int i, j;
     char *ptr;
 
+    // Outer loop starts from second element
+    for (i = 1; i<n ; i++){
 
-    for (i=1; i<n; i++) {
+        // Pointer that points to the current element
         ptr = matrix[i];
         j = i;
+
+        // The inner loop checks if the current string (ptr) is smaller than the string at index j.
         while (--j >= 0 && strcmp(ptr,matrix[j]) < 0) {
+
+            // Shift element to make space for ptr
             matrix[j+1] = matrix[j];
         }
         matrix[j+1] = ptr;
     }
-
-
 }
+
 
 void fileWrite (char *nameFile, char **matrix, int n){
     FILE  * fp;
