@@ -1,0 +1,189 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#define nameLength 30
+
+
+// Structure Declaration
+
+typedef struct athlete_t{
+    char *name;
+    int id;
+    int lapNum;
+    float *lapArray;
+
+}athlete_t;
+
+// Function Prototypes
+void detailsFunction(athlete_t *athlete, char *athleteName, int n);
+athlete_t *readFile(char *nameFile, int *n);
+void displayStructure(athlete_t *athlete, int n);
+void listFunction(athlete_t *athlete, int n);
+void bestFunction(athlete_t * athlete, int n);
+int min(float array[], int n);
+
+// Main Program
+int main() {
+    athlete_t *athlete;
+    char userChoice[256];
+    char nameFile[256];
+    char name[256];
+    int n;
+
+    fprintf(stdout,"Input File Name:\n");
+    scanf("%s", nameFile);
+
+    athlete = readFile(nameFile, &n);
+
+
+    do{
+
+        fprintf(stdout,"Available Commands: ( list details best stop)\n");
+        scanf("%s", userChoice);
+
+        if(!strcmp(userChoice, "list")){
+            listFunction(athlete,n);
+        }
+
+        else if(!strcmp(userChoice,"details")){
+            fprintf(stdout,"Insert name of the athlete:\n");
+            scanf("%s", name);
+            detailsFunction(athlete, name, n);
+        }
+
+        else if(!strcmp(userChoice,"best")){
+            bestFunction(athlete,n);
+        }
+        else{
+            if(!strcmp(userChoice, "stop")){
+                fprintf(stdout,"Program ended\n");
+            }else{
+                fprintf(stdout,"Wrong input, Try again\n");
+            }
+        }
+
+    } while (strcmp(userChoice,"stop"));
+
+
+    return EXIT_SUCCESS;
+}
+
+
+// Function Declarations
+
+athlete_t *readFile(char *nameFile, int *n){
+
+    athlete_t *athlete;
+    FILE *fp;
+    char name[nameLength];
+    int i, j, id, numLap;
+
+    fp = fopen(nameFile,"r");
+    if(fp == NULL){
+        fprintf(stderr,"Error opening file\n");
+        exit(EXIT_FAILURE);
+    }
+
+    fscanf(fp,"%d", n);
+
+    athlete = (athlete_t *) malloc ( (*n) * sizeof (athlete_t));
+    if(athlete == NULL){
+        fprintf(stderr,"Memory allocation failed");
+        exit(EXIT_FAILURE);
+    }
+
+    for(i = 0; i < *n ; i++){
+        // Scan details
+        fscanf(fp,"%s %d %d", name, &id, &numLap);
+
+        // Allocation Name and Lap Arrays
+        athlete[i].name = (char *) malloc ((strlen(name)+1) * sizeof (char));
+        athlete[i].lapArray = (float *) malloc (numLap * sizeof (float));
+
+        if(athlete[i].name == NULL || athlete[i].lapArray == NULL){
+            fprintf(stderr,"Arrays of structure allocation failed\n");
+            exit(EXIT_FAILURE);
+        }
+
+        // Store data into Structure
+        athlete[i].name = strdup(name);
+        athlete[i].id = id;
+        athlete[i].lapNum = numLap;
+
+        for(j = 0; j < numLap ; j++){
+            fscanf(fp,"%f",&athlete[i].lapArray[j]);
+        }
+    }
+
+    fprintf(stdout,"Structure stored successfully\n");
+
+    fclose(fp);
+    return athlete;
+}
+
+void listFunction(athlete_t *athlete, int n){
+    int i;
+
+    fprintf(stdout,"Number of athletes: %d\n", n);
+
+    for(i = 0; i < n; i++){
+        fprintf(stdout,"Name: %s #Id:%d #Laps:%d \n", athlete[i].name, athlete[i].id, athlete[i].lapNum);
+    }
+    fprintf(stdout,"\n");
+}
+
+void bestFunction(athlete_t * athlete, int n){
+    int i, j;
+    int index;
+    float bestArray[n];
+    float average, sum;
+
+    for(i = 0; i < n ; i++){
+        sum = 0;
+        for(j = 0; j < athlete[i].lapNum ; j++){
+            sum = sum + athlete[i].lapArray[j];
+        }
+        average = sum / (float) (athlete[i].lapNum) ;
+        bestArray[i] = average;
+    }
+
+    index = min(bestArray, n);
+    fprintf(stdout,"Name:%s #Id number:%d Laps: %d ", athlete[index].name, athlete[index].id, athlete[index].lapNum);
+    fprintf(stdout,"Times: ");
+
+    for (i = 0; i < athlete[index].lapNum ; i++){
+        fprintf(stdout,"%.2f ",athlete[index].lapArray[i]);
+    }
+    fprintf(stdout,"Average (%.2f)\n", bestArray[index]);
+}
+
+void detailsFunction(athlete_t *athlete, char *athleteName, int n) {
+
+    int i, j;
+
+    for (i = 0; i < n; i++) {
+        if (!strcmp(athleteName, athlete[i].name)) {
+            fprintf(stdout, "# ID:%d #Laps:%d Times: ", athlete[i].id, athlete[i].lapNum);
+            for (j = 0; j < n; j++) {
+                fprintf(stdout, "%.2f ", athlete[i].lapArray[j]);
+            }
+            fprintf(stdout, "\n");
+        }
+    }
+}
+
+
+int min(float array[], int n){
+    int i, index;
+    float min;
+
+    min = array[0];
+    for(i = 0; i < n ; i++){
+        if (array[i] < min) {
+            min = array[i];
+            index = i;
+        }
+    }
+    return index;
+}
+
