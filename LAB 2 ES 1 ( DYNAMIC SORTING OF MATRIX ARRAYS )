@@ -7,7 +7,7 @@
 // Structure Declaration
 
 
-// Function Prototypes
+// Function Prototypes 
 char **readFile (char *nameFile, char **matrix, int *n);
 void fileWrite (char *nameFile, char **matrix, int n);
 void sortMatrix(char **matrix , int n);
