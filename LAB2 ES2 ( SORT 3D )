@@ -1,0 +1,136 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
+
+// Function Prototypes
+char ***readFile(char *nameFile, int *R, int *C);
+char **merge_matrix(char ***matrix, int R, int C);
+void writeFile(char **Result, char *nameFile, int r, int c);
+
+// Main Program
+int main() {
+    char ***mat;
+    char **result;
+    char nameFile[30];
+    int i, j, r, c;
+
+    fprintf(stdout,"Insert name of the file:\n");
+    scanf("%s", nameFile);
+
+    // Load The Matrix
+    mat = readFile(nameFile, &r, &c);
+
+    // Sorting Algorithm
+    result = merge_matrix(mat, r, c);
+
+    // Write Output
+    writeFile(result,"../output.txt", r, c);
+
+
+    // Free dynamically allocated matrix
+    for(i = 0; i < r; i++){
+        for(j = 0 ; j < c ; j++){
+            free(mat[i][j]);
+        }
+        free(mat[i]);
+    }
+    free(mat);
+    return EXIT_SUCCESS;
+}
+
+
+// Function Declarations
+
+char ***readFile(char *nameFile, int *R, int *C){
+    char ***mat = NULL, string[30];
+    FILE *fp;
+    int i, j, r, c;
+
+    fp = fopen(nameFile,"r");
+    if(fp == NULL){
+        fprintf(stderr,"Error opening file\n");
+        exit(EXIT_FAILURE);
+    }
+
+    fscanf(fp, "%d %d", &r, &c);
+
+    mat = (char ***) malloc (r * sizeof (char **));
+    if(mat == NULL){
+        fprintf(stderr,"Memory allocation failed\n");
+        exit(EXIT_FAILURE);
+    }
+
+    for(i = 0 ; i < r ; i++){
+
+        mat[i] = (char **) malloc ( c * sizeof (char *));
+        if(mat[i] == NULL){
+            fprintf(stderr,"Memory allocation failed\n");
+            exit(EXIT_FAILURE);
+        }
+
+        for(j=0 ; j < c ; j++){
+
+            // Store string from file into an array
+            fscanf(fp, "%s" , string);
+
+            // Parse the string into the matrix
+            mat[i][j] = strdup(string);
+        }
+    }
+
+    fclose(fp);
+
+    *R = r;
+    *C = c;
+
+    return mat;
+}
+
+void writeFile(char **Result, char *nameFile, int r, int c){
+    FILE *fp;
+    int i, j;
+
+    fp = fopen(nameFile, "w");
+    if(fp == NULL){
+        fprintf(stderr,"Error opening file\n");
+        exit(EXIT_FAILURE);
+    }
+
+    for(i = 0; i < r * c ; i++){
+        fprintf(fp,"%s\n", Result[i]);
+    }
+    fclose(fp);
+}
+
+
+char **merge_matrix(char ***matrix, int R, int C) {
+    int i, j, min_idx, *idx;
+    char **array, *min_word;
+
+    /* allocate the final array, plus an auxiliary one */
+    array = (char **)malloc(R * C * sizeof(char *));
+    idx = (int *)calloc(R, sizeof(int));
+    if ((array == NULL) || (idx == NULL)) {
+        printf("Memory allocation error.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    /* merge the matrix rows */
+    i = 0;
+    while (i < R*C) {
+        min_idx = -1;
+        for (j=0; j<R; j++) {
+            if (idx[j] < C) {
+                if ((min_idx==-1) || (strcmp(matrix[j][idx[j]], min_word)<0)) {
+                    min_idx = j;
+                    min_word = matrix[min_idx][idx[min_idx]];
+                }
+            }
+        }
+        array[i++] = matrix[min_idx][idx[min_idx]++];
+    }
+
+    free(idx);
+    return array;
+}
