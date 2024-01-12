@@ -1,0 +1,107 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#define strLength 30
+
+
+// Structure Declaration
+
+
+// Function Prototypes
+char **readFile (char *nameFile, char **matrix, int *n);
+void fileWrite (char *nameFile, char **matrix, int n);
+void sortMatrix(char **matrix , int n);
+
+
+
+// Main Program
+int main() {
+    char **matrix = NULL;
+    char nameFile[strLength];
+    int n;
+
+    fprintf(stdout,"Insert name of the file:\n");
+    scanf("%s", nameFile);
+
+    // Load the matrix
+    matrix = readFile(nameFile, matrix, &n);
+
+    // Sort the matrix
+    sortMatrix(matrix, n);
+
+
+    // Print the result into output file
+    fileWrite("../output.txt", matrix , n);
+
+    return EXIT_SUCCESS;
+}
+
+
+// Function Declarations
+
+char **readFile (char *nameFile, char **matrix, int *n){
+    FILE  *fp;
+    char string[strLength];
+    int i;
+
+    fp = fopen(nameFile,"r");
+    if(fp == NULL){
+        fprintf(stderr,"Error opening file\n");
+        exit(EXIT_FAILURE);
+    }
+
+    fscanf(fp,"%d", n);
+
+    matrix = (char **) malloc ((*n) * sizeof(char *));
+    if(matrix == NULL){
+        fprintf(stderr,"Memory allocation failed\n");
+        exit(EXIT_FAILURE);
+    }
+
+    for(i = 0 ; i < *n ; i++){
+        fscanf(fp,"%s",string);
+
+        // Allocate an array inside each cell
+        matrix[i] = (char *) malloc ((strlen(string)+1) * sizeof (char));
+        if(matrix[i] == NULL){
+            fprintf(stderr,"Memory allocation failed\n");
+            exit(EXIT_FAILURE);
+        }
+        // Push string into the 2D matrix
+        matrix[i] = strdup(string);
+    }
+
+    fclose(fp);
+    return matrix;
+}
+
+void sortMatrix(char **matrix , int n){
+    int i, j;
+    char *ptr;
+
+
+    for (i=1; i<n; i++) {
+        ptr = matrix[i];
+        j = i;
+        while (--j >= 0 && strcmp(ptr,matrix[j]) < 0) {
+            matrix[j+1] = matrix[j];
+        }
+        matrix[j+1] = ptr;
+    }
+
+
+}
+
+void fileWrite (char *nameFile, char **matrix, int n){
+    FILE  * fp;
+    int i;
+    fp = fopen(nameFile,"w");
+    if(fp == NULL){
+        fprintf(stderr,"Error opening file\n");
+        exit(EXIT_FAILURE);
+    }
+    for(i = 0 ; i < n ; i++){
+        fprintf(fp, "%s\n", matrix[i]);
+    }
+    fclose(fp);
+}
