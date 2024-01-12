@@ -108,15 +108,29 @@ char **merge_matrix(char ***matrix, int R, int C) {
     int i, j, min_idx, *idx;
     char **array, *min_word;
 
-    /* allocate the final array, plus an auxiliary one */
-    array = (char **)malloc(R * C * sizeof(char *));
+    // Final array to store the merged strings.
+    array = (char **) malloc (R * C * sizeof(char *));
+
+    // An array to keep track of the current index for each row in the original matrix.
     idx = (int *)calloc(R, sizeof(int));
+
+    
     if ((array == NULL) || (idx == NULL)) {
         printf("Memory allocation error.\n");
         exit(EXIT_FAILURE);
     }
 
-    /* merge the matrix rows */
+
+
+    /*
+       The code uses a nested loop to iterate through the rows and columns of the matrix.
+       It finds the minimum lexicographical string at the current indices of each row.
+       It then stores that minimum string in the array and increments the corresponding row index (idx[min_idx]).
+       This process continues until all elements from the matrix are merged into the final array.
+    */
+
+
+    // Merging the matrix rows
     i = 0;
     while (i < R*C) {
         min_idx = -1;
