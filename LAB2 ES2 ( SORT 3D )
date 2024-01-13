@@ -45,6 +45,7 @@ int main() {
 char ***readFile(char *nameFile, int *R, int *C){
     char ***mat = NULL, string[30];
     FILE *fp;
+
     int i, j, r, c;
 
     fp = fopen(nameFile,"r");
@@ -105,22 +106,20 @@ void writeFile(char **Result, char *nameFile, int r, int c){
 
 
 char **merge_matrix(char ***matrix, int R, int C) {
-    int i, j, min_idx, *idx;
+
+    int i, j, min, *idx;
     char **array, *min_word;
 
     // Final array to store the merged strings.
-    array = (char **) malloc (R * C * sizeof(char *));
+    array = (char **) malloc ((R * C) * sizeof(char *));
 
-    // An array to keep track of the current index for each row in the original matrix.
-    idx = (int *)calloc(R, sizeof(int));
+    // A counter array to keep track of the current index for each row in the original matrix.
+    idx = (int *) malloc (R * sizeof(int));
 
-    
     if ((array == NULL) || (idx == NULL)) {
-        printf("Memory allocation error.\n");
+        printf("Memory allocation failed\n");
         exit(EXIT_FAILURE);
     }
-
-
 
     /*
        The code uses a nested loop to iterate through the rows and columns of the matrix.
@@ -130,20 +129,27 @@ char **merge_matrix(char ***matrix, int R, int C) {
     */
 
 
-    // Merging the matrix rows
-    i = 0;
-    while (i < R*C) {
-        min_idx = -1;
-        for (j=0; j<R; j++) {
+
+
+    // Loop through the whole matrix
+    for (i = 0; i < (R * C) ; i++) {
+        min = -1;
+        // Find the minimum string at the current indices of each row
+        for (j = 0; j < R; j++) {
             if (idx[j] < C) {
-                if ((min_idx==-1) || (strcmp(matrix[j][idx[j]], min_word)<0)) {
-                    min_idx = j;
-                    min_word = matrix[min_idx][idx[min_idx]];
+                if ((min == -1) || (strcmp(matrix[j][idx[j]], min_word) < 0)) {
+                    // Keeps track of the row index with the minimum string
+                    min = j;
+
+                    // store the first string in min_word
+                    min_word = matrix[min][idx[min]];
                 }
             }
         }
-        array[i++] = matrix[min_idx][idx[min_idx]++];
+        // Store the minimum string in the merged array
+        array[i] = matrix[min][idx[min]++];
     }
+
 
     free(idx);
     return array;
