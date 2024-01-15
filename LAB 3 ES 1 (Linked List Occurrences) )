@@ -1,0 +1,212 @@
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <ctype.h>
+#define  W_SIZE  100
+
+
+// Structure Declaration
+typedef struct wordS {
+    char *word;
+    int freq;
+    struct wordS *next;
+} wordT;
+
+
+
+// Function Prototypes
+
+wordT *listCreate (FILE *);
+int compareStrings(char *, char *);
+wordT *findWord (wordT *, char *);
+void cleanWord (char *);
+void writeList (wordT *, FILE *);
+void cleanUp (wordT *);
+wordT *push (wordT *, char *);
+
+
+// Main Function
+
+int main () {
+    FILE  *fpR, *fpW;
+    wordT *headP = NULL;
+
+    fpR = fopen("../input.txt","r");
+    fpW = fopen("../output.txt","w");
+
+    if(fpR == NULL || fpW == NULL){
+        fprintf(stderr,"Error opening file\n");
+        exit(EXIT_FAILURE);
+    }
+
+    // Create Linked List
+    headP = listCreate(fpR);
+
+    // Generate Result
+    writeList(headP, fpW);
+
+    fclose(fpR);
+    fclose(fpW);
+
+    // Dispose List
+    cleanUp(headP);
+
+    return (EXIT_SUCCESS);
+}
+
+
+
+// Function Declarations
+wordT *listCreate ( FILE *fp ) {
+
+    wordT *headP = NULL;
+    wordT *tmpP;
+
+    char buffer[W_SIZE+3];
+
+    while ( fscanf(fp, "%s", buffer) != EOF ) {
+
+        cleanWord(buffer);
+
+        // findWord = (returns NULL search miss) or (pointer to node search hit)
+        tmpP = findWord(headP, buffer);
+        if ( tmpP != NULL ) {
+            // Search Hit
+            tmpP->freq++;
+
+        } else {
+            // Search Miss
+            headP = push (headP, buffer);
+        }
+    }
+
+    return(headP);
+}
+
+
+/*
+   This function removes all characters that ar
+   NOT alphabetic characters OR NOT numbers
+*/
+
+
+void cleanWord(char *word) {
+    int i, j, n;
+
+    n = strlen(word);
+
+    for (i = 0; i < n;) {
+
+        if (!isalpha(word[i]) && !isdigit(word[i])) {
+
+            // Shift characters to remove the i-th character
+            for (j = i; j < n - 1; j++) {
+                word[j] = word[j + 1];
+            }
+            // Reduce size of the array
+            n--;
+
+        } else {
+            // Only increment i if a character is not removed
+            i++;
+        }
+    }
+    // Null-terminate the string to ensure proper termination
+    word[n] = '\0';
+}
+
+
+wordT *findWord ( wordT *headP, char *word ) {
+    wordT *tmpP;
+    int found;
+
+    tmpP = headP;
+    while ( tmpP != NULL ) {
+        found = compareStrings(word,tmpP->word);
+        if( found == 1 ){
+            break;
+        }
+        else{
+            tmpP = tmpP->next;
+        }
+
+    }
+
+    if (!found) {
+        tmpP = NULL;
+    }
+
+    return(tmpP);
+}
+
+
+wordT *push (wordT *headP, char *buffer) {
+    wordT *newP;
+
+    newP = malloc (1 * sizeof (wordT));
+
+    if (newP == NULL) {
+        printf("Allocation Error.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    newP->word = malloc((strlen(buffer)+1) * sizeof(char));
+
+    if ( newP->word == NULL ) {
+        printf("Allocation Error.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    // Store infos in New Node
+    strcpy (newP->word, buffer);
+    newP->freq = 1;
+    newP->next = headP;
+
+    return (newP);
+}
+
+
+int compareStrings(char *a, char *b) {
+    int i;
+    if( strlen(a) != strlen(b) ){
+        return 0;
+    }
+    for(i = 0; i < strlen(a); i++ ) {
+
+        if( tolower(a[i]) != tolower(b[i]) ){
+            return 0;
+        }
+
+    }
+    return 1;
+}
+
+
+
+void cleanUp ( wordT *headP ) {
+
+    wordT *tmpP, *Next;
+    tmpP = headP;
+
+    // Dispose the List
+    while ( tmpP != NULL ) {
+        Next = tmpP->next;
+        free(tmpP);
+        tmpP = Next;
+    }
+
+    headP = NULL;
+    return;
+}
+
+void writeList ( wordT *headP, FILE *fp ) {
+    wordT  *tmpP;
+
+    tmpP = headP;
+    while ( tmpP != NULL ) {
+        fprintf(fp, "%s %d\n", tmpP->word, tmpP->freq);
+        tmpP = tmpP->next;
+    }
+
+    return;
+}
