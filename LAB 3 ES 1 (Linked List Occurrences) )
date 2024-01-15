@@ -2,211 +2,142 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
-#define  W_SIZE  100
 
+#define length 100
 
-// Structure Declaration
-typedef struct wordS {
+typedef struct nodeT {
     char *word;
     int freq;
-    struct wordS *next;
-} wordT;
-
-
+    struct nodeT *next;
+} nodeT;
 
 // Function Prototypes
+nodeT *checkOccurrences(nodeT *head, char *buff);
+nodeT *createList(char *fileName, nodeT *head);
+void writeResult(char *nameFile, nodeT *head);
+nodeT *findWord(nodeT *head, char *buff);
+nodeT *push(nodeT *head, char *buff);
+void disposeList(nodeT *head);
+int stringCompare(const char *str1, const char *str2);
+void cleanBuffer(char *word);
 
-wordT *listCreate (FILE *);
-int compareStrings(char *, char *);
-wordT *findWord (wordT *, char *);
-void cleanWord (char *);
-void writeList (wordT *, FILE *);
-void cleanUp (wordT *);
-wordT *push (wordT *, char *);
 
 
-// Main Function
+int main() {
+    nodeT *head = NULL;
+    head = createList("../input.txt", head);
+    writeResult("../output.txt", head);
+    disposeList(head);
 
-int main () {
-    FILE  *fpR, *fpW;
-    wordT *headP = NULL;
+    return EXIT_SUCCESS;
+}
 
-    fpR = fopen("../input.txt","r");
-    fpW = fopen("../output.txt","w");
+nodeT *createList(char *fileName, nodeT *head) {
+    FILE *fp;
+    char buffer[length];
 
-    if(fpR == NULL || fpW == NULL){
-        fprintf(stderr,"Error opening file\n");
+    fp = fopen(fileName, "r");
+    if (fp == NULL) {
+        fprintf(stderr, "Error opening file\n");
         exit(EXIT_FAILURE);
     }
 
-    // Create Linked List
-    headP = listCreate(fpR);
-
-    // Generate Result
-    writeList(headP, fpW);
-
-    fclose(fpR);
-    fclose(fpW);
-
-    // Dispose List
-    cleanUp(headP);
-
-    return (EXIT_SUCCESS);
-}
-
-
-
-// Function Declarations
-wordT *listCreate ( FILE *fp ) {
-
-    wordT *headP = NULL;
-    wordT *tmpP;
-
-    char buffer[W_SIZE+3];
-
-    while ( fscanf(fp, "%s", buffer) != EOF ) {
-
-        cleanWord(buffer);
-
-        // findWord = (returns NULL search miss) or (pointer to node search hit)
-        tmpP = findWord(headP, buffer);
-        if ( tmpP != NULL ) {
-            // Search Hit
-            tmpP->freq++;
-
-        } else {
-            // Search Miss
-            headP = push (headP, buffer);
-        }
+    while (fscanf(fp, "%s", buffer) != EOF) {
+        cleanBuffer(buffer);
+        head = checkOccurrences(head, buffer);
     }
 
-    return(headP);
+    fclose(fp);
+    return head;
 }
 
-
-/*
-   This function removes all characters that ar
-   NOT alphabetic characters OR NOT numbers
-*/
-
-
-void cleanWord(char *word) {
+void cleanBuffer(char *word) {
     int i, j, n;
 
     n = strlen(word);
-
-    for (i = 0; i < n;) {
-
+    for (i = 0; i < n; i++) {
+        word[i] = tolower(word[i]);
         if (!isalpha(word[i]) && !isdigit(word[i])) {
-
-            // Shift characters to remove the i-th character
             for (j = i; j < n - 1; j++) {
                 word[j] = word[j + 1];
             }
-            // Reduce size of the array
-            n--;
-
-        } else {
-            // Only increment i if a character is not removed
-            i++;
+            i--; // Decrement i to recheck the current position
         }
     }
-    // Null-terminate the string to ensure proper termination
-    word[n] = '\0';
 }
 
-
-wordT *findWord ( wordT *headP, char *word ) {
-    wordT *tmpP;
-    int found;
-
-    tmpP = headP;
-    while ( tmpP != NULL ) {
-        found = compareStrings(word,tmpP->word);
-        if( found == 1 ){
-            break;
-        }
-        else{
-            tmpP = tmpP->next;
-        }
-
+nodeT *checkOccurrences(nodeT *head, char *buff) {
+    if (head == NULL) {
+        head = push(head, buff);
+    } else {
+        head = findWord(head, buff);
     }
-
-    if (!found) {
-        tmpP = NULL;
-    }
-
-    return(tmpP);
+    return head;
 }
 
-
-wordT *push (wordT *headP, char *buffer) {
-    wordT *newP;
-
-    newP = malloc (1 * sizeof (wordT));
-
-    if (newP == NULL) {
-        printf("Allocation Error.\n");
+nodeT *push(nodeT *head, char *buff) {
+    nodeT *ptr = (nodeT *)malloc(sizeof(nodeT));
+    if (ptr == NULL) {
+        fprintf(stderr, "Memory allocation failed");
         exit(EXIT_FAILURE);
     }
 
-    newP->word = malloc((strlen(buffer)+1) * sizeof(char));
-
-    if ( newP->word == NULL ) {
-        printf("Allocation Error.\n");
+    ptr->word = strdup(buff);
+    if (ptr->word == NULL) {
+        fprintf(stderr, "Memory allocation failed");
         exit(EXIT_FAILURE);
     }
 
-    // Store infos in New Node
-    strcpy (newP->word, buffer);
-    newP->freq = 1;
-    newP->next = headP;
+    ptr->freq = 1;
+    ptr->next = head;
+    head = ptr;
 
-    return (newP);
+    return head;
 }
 
+nodeT *findWord(nodeT *head, char *buff) {
+    nodeT *ptrT = head;
 
-int compareStrings(char *a, char *b) {
-    int i;
-    if( strlen(a) != strlen(b) ){
-        return 0;
-    }
-    for(i = 0; i < strlen(a); i++ ) {
-
-        if( tolower(a[i]) != tolower(b[i]) ){
-            return 0;
+    while (ptrT != NULL) {
+        if (stringCompare(ptrT->word, buff)) {
+            ptrT->freq++;
+            return head;
         }
-
+        ptrT = ptrT->next;
     }
-    return 1;
+
+    // If the word is not found, push it to the list
+    head = push(head, buff);
+    return head;
 }
 
-
-
-void cleanUp ( wordT *headP ) {
-
-    wordT *tmpP, *Next;
-    tmpP = headP;
-
-    // Dispose the List
-    while ( tmpP != NULL ) {
-        Next = tmpP->next;
-        free(tmpP);
-        tmpP = Next;
-    }
-
-    headP = NULL;
-    return;
+int stringCompare(const char *str1, const char *str2) {
+    return (strcmp(str1, str2) == 0);
 }
 
-void writeList ( wordT *headP, FILE *fp ) {
-    wordT  *tmpP;
-
-    tmpP = headP;
-    while ( tmpP != NULL ) {
-        fprintf(fp, "%s %d\n", tmpP->word, tmpP->freq);
-        tmpP = tmpP->next;
+void writeResult(char *nameFile, nodeT *head) {
+    FILE *fp = fopen(nameFile, "w");
+    if (fp == NULL) {
+        fprintf(stderr, "Error opening file for writing\n");
+        exit(EXIT_FAILURE);
     }
 
-    return;
+    while (head != NULL) {
+        fprintf(fp, "%s : %d\n", head->word, head->freq);
+        nodeT *temp = head;
+        head = head->next;
+        free(temp->word);
+        free(temp);
+    }
+
+    fclose(fp);
+}
+
+void disposeList(nodeT *head) {
+    while (head != NULL) {
+        nodeT *temp = head;
+        head = head->next;
+        free(temp->word);
+        free(temp);
+    }
 }
