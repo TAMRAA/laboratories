@@ -1,0 +1,195 @@
+de <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+#define strLength 100
+#define idLength 16
+#define dateLength 11
+
+typedef struct employeeT {
+    char *name;
+    char *id;
+    char *data;
+    int salary;
+
+    struct employeeT *left;
+    struct employeeT *right;
+} employeeT;
+
+// Function Prototypes
+employeeT *createNode(const char *name, const char *id, const char *data, int salary);
+employeeT *push(employeeT *head, const char *name, const char *id, const char *data, int salary);
+employeeT *createList(const char *nameFile);
+void algorithm(employeeT *head, const char *name, const char *operations);
+void writeFile(const char *fileName, employeeT *head);
+void disposeList(employeeT *head);
+void printList(struct employeeT *head);
+
+// Main Function
+int main() {
+    employeeT *head = NULL;
+    char nameFile[strLength];
+    char employee[strLength];
+    char operations[strLength];
+
+    printf("Insert name of the input file: ");
+    scanf("%s", nameFile);
+
+    printf("Insert employee (firstname_lastname): ");
+    scanf("%s", employee);
+
+    printf("Insert operations: ");
+    scanf("%s", operations);
+
+    head = createList(nameFile);
+    printList(head);
+    algorithm(head, employee, operations);
+    writeFile("../output.txt", head);
+
+    disposeList(head);
+    return EXIT_SUCCESS;
+}
+
+// Function Definitions
+
+employeeT *createNode(const char *name, const char *id, const char *data, int salary) {
+    employeeT *ptr = (struct employeeT *) malloc (1 * sizeof(employeeT));
+    if (ptr == NULL) {
+        fprintf(stderr, "Memory allocation failed\n");
+        exit(EXIT_FAILURE);
+    }
+
+    // Use dynamic memory allocation for strings
+    ptr->name = strdup(name);
+    ptr->id = strdup(id);
+    ptr->data = strdup(data);
+
+    ptr->salary = salary;
+
+    ptr->left = NULL;
+    ptr->right = NULL;
+
+    return ptr;
+}
+
+employeeT *push(employeeT *head, const char *name, const char *id, const char *data, int salary) {
+    employeeT *ptr = createNode(name, id, data, salary);
+
+    if (head == NULL) {
+        // Create first node
+        head = ptr;
+    } else {
+        // Add node to list
+        ptr->right = head;
+        head->left = ptr;
+        head = ptr;
+    }
+
+    return head;
+}
+
+employeeT *createList(const char *nameFile) {
+    FILE *fp;
+    char name[strLength];
+    char id[idLength];
+    char data[dateLength];
+    int salary;
+
+    employeeT *head = NULL;
+
+    fp = fopen(nameFile, "r");
+    if (fp == NULL) {
+        fprintf(stderr, "Error opening file\n");
+        exit(EXIT_FAILURE);
+    }
+
+    while (fscanf(fp,"%s %s %s %d", name, id, data, &salary) != EOF ) {
+        head = push(head, name, id, data, salary);
+    }
+
+    fclose(fp);
+    return head;
+}
+
+void algorithm(employeeT *head, const char *name, const char *operations) {
+    employeeT *ptr = head;
+
+    // Find the specified employee
+    while (ptr != NULL && strcasecmp(ptr->name, name) != 0) {
+        ptr = ptr->right;
+    }
+
+    if (ptr == NULL) {
+        fprintf(stderr, "Error: Employee not found\n");
+        return;
+    }
+
+    // Print the information for the specified employee
+    printf("%s %s %s %d\n", ptr->name, ptr->id, ptr->data, ptr->salary);
+
+    // Operations loop
+    for (int i = 0; operations[i] != '\0'; i++) {
+        // Display left
+        if (operations[i] == '-') {
+            if (ptr->left != NULL) {
+                ptr = ptr->left;
+            }
+        }
+            // Display right
+        else if (operations[i] == '+') {
+            if (ptr->right != NULL) {
+                ptr = ptr->right;
+            }
+        } else {
+            fprintf(stderr, "Error: Invalid operation (+ or -) only!\n");
+            exit(EXIT_FAILURE);
+        }
+
+        // Print the information after applying the operation
+        printf("%s %s %s %d\n", ptr->name, ptr->id, ptr->data, ptr->salary);
+    }
+}
+
+void writeFile(const char *fileName, employeeT *head) {
+    FILE *fp;
+    employeeT *ptr = head;
+
+    fp = fopen(fileName, "w");
+    if (fp == NULL) {
+        fprintf(stderr, "Error opening file\n");
+        exit(EXIT_FAILURE);
+    }
+
+    while (ptr != NULL) {
+        fprintf(fp, "%s %s %s %d\n", ptr->name, ptr->id, ptr->data, ptr->salary);
+        ptr = ptr->right;
+    }
+
+    fclose(fp);
+}
+
+void disposeList(employeeT *head) {
+    employeeT *ptr = NULL;
+    while (head != NULL) {
+        ptr = head;
+        head = head->right;
+
+        // Free the strings
+        free(ptr->name);
+        free(ptr->id);
+        free(ptr->data);
+
+        // Free the node
+        free(ptr);
+    }
+}
+
+void printList(struct employeeT *head){
+    employeeT *ptr = head;
+
+    while(head != NULL){
+        fprintf(stdout, "%s %s %s %d\n", ptr->name, ptr->id, ptr->data, ptr->salary);
+        ptr = ptr->right;
+    }
+
+}
